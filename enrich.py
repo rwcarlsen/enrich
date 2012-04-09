@@ -1,5 +1,6 @@
 
 import math
+import matplotlib.pyplot as plt
 
 kWhkg2GWdMT = 24000
 
@@ -76,13 +77,21 @@ if __name__ == '__main__':
   natenr = .0071
   delta = (maxenr - natenr) / 100
 
+  enrichments = []
+  valkg = []
+  valkwh = []
+
   e = natenr
   while e <= maxenr:
     e += delta
+
     m = Matl()
     m.M = 1
     onceThrough(m, e)
-    print "\ncost:"
-    print m.Enrich
-    print m.ValPerKWh()
+
+    enrichments.append(m.Enrich)
+    valkg.append(m.ValPerKg())
+    valkwh.append(m.ValPerKWh())
+
+  plt.plot(enrichments, valkg)
 

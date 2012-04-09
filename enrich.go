@@ -11,28 +11,24 @@ const (
 )
 
 func main() {
-  m := &Matl{M:1}
 
-  mine(m)
-  convert(m)
-  enrich(m, 0.035, 0.003)
-  dispose(m)
+  maxenr := .2
+  for e := 0.0071; e <= maxenr; e += (maxenr - .0071) / 10 {
+    m := &Matl{M:1}
+    onceThrough(m, Enrichment(e))
+    fmt.Println("\ncost:")
+    fmt.Println(m)
+    fmt.Println(m.ValPerKWh())
+  }
 
-  fmt.Println(m)
-  fmt.Println(m.ValPerKg())
-  fmt.Println(m.ValPerKWh(bu))
 }
 
-func onceThrough(m *Matl) {
+func onceThrough(m *Matl, e Enrichment) {
   mine(m)
   convert(m)
-  enrich(m, 0.035, 0.003)
+  enrich(m, e, 0.003)
   burn(m, 3)
   dispose(m)
-
-  fmt.Println(m)
-  fmt.Println(m.ValPerKg())
-  fmt.Println(m.ValPerKWh())
 }
 
 type (
@@ -56,7 +52,7 @@ func (m *Matl) ValPerKg() Value {
   return m.Val / Value(m.M)
 }
 
-func (m *Matl) ValPerKWh(bu Burnup) Value {
+func (m *Matl) ValPerKWh() Value {
   return m.Val / Value(m.E)
 }
 
@@ -76,30 +72,13 @@ func convert(m *Matl) *Matl {
 }
 
 func enrich(m *Matl, tgt, tail Enrichment) *Matl {
-  xf := m.Enrich
-  xp := tgt
-  xt := tail
-  F := m.M
-  P := Mass((xf - xt) / (xp - xt)) * F
-  T := F - P
+  P, nswu := swu(m.M, m.Enrich, tgt, tail)
 
-  swu := float64(P) * potential(xp) + float64(T) * potential(xt) - float64(F) * potential(xf)
-
-  m.Val += 133 * Value(swu)
+  m.Val += 133 * Value(nswu)
   m.Form = "U"
   m.M = P
-  m.Enrich = xp
+  m.Enrich = tgt
 
-  return m
-}
-
-func potential(enrich Enrichment) float64 {
-  x := float64(enrich)
-  return (1 - 2 * x) * math.Log((1 - x) / x)
-}
-
-func dispose(m *Matl) *Matl {
-  m.Val += 2000 * Value(m.M)
   return m
 }
 
@@ -113,5 +92,21 @@ func burn(m *Matl, nBatches int) *Matl {
 
   m.E = Energy(bd) * kWhkg2GWdMT * Energy(m.M)
   return m
+}
+
+func dispose(m *Matl) *Matl {
+  m.Val += 2000 * Value(m.M)
+  return m
+}
+
+func swu(F Mass, xf, xp, xt Enrichment) (Mass, float64) {
+  P := Mass((xf - xt) / (xp - xt)) * F
+  T := F - P
+  return P, float64(P) * potential(xp) + float64(T) * potential(xt) - float64(F) * potential(xf)
+}
+
+func potential(enrich Enrichment) float64 {
+  x := float64(enrich)
+  return (1 - 2 * x) * math.Log((1 - x) / x)
 }
 
