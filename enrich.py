@@ -12,7 +12,7 @@ def linspace(start = 0, end = 1, count = 1):
   return vals
 
 class Costs:
-  def __init__(self, enrich = 133, convert = 6.5, mine = 100, dispose = 500):
+  def __init__(self, enrich = 133, convert = 6.5, mine = 100, dispose = 600):
     self.enrich = enrich
     self.convert = convert
     self.mine = mine
@@ -49,7 +49,6 @@ def enrich(m, cost, tgt, tail):
   P, nswu = swu(m.M, m.Enrich, tgt, tail)
 
   m.Val += cost * nswu
-  m.Form = "U"
   m.M = P
   m.Enrich = tgt
 
@@ -87,11 +86,19 @@ def onceThrough(m, costs = None, prod = 0.035, tail = 0.003, nBatches = 3):
   burn(m, nBatches)
   dispose(m, cost = costs.dispose)
 
+def onlyEnrich(m, costs = None, prod = 0.035, tail = 0.003):
+  if costs is None:
+    costs = Costs()
+
+  mine(m, costs.mine)
+  convert(m, costs.convert)
+  enrich(m, costs.enrich, prod, tail)
+
 def vary_dispose():
   maxenr = .1
   natenr = .0071
   enrichments = linspace(natenr, maxenr, 10000)
-  disp_costs = linspace(0, 1000, 20)
+  disp_costs = linspace(0, 1000, 15)
   for cost in disp_costs:
     valkg = []
     valkwh = []
@@ -104,6 +111,7 @@ def vary_dispose():
 
     plt.plot(enrichments, valkwh, label = str(cost))
   plt.show()
+
 
 def swuplot():
   maxenr = .2
@@ -118,11 +126,28 @@ def swuplot():
     swus.append(s / p)
 
   plt.plot(enrichments, swus)
-  plt.legend(costs)
+  plt.show()
+
+def only_enrich():
+  maxenr = .2
+  natenr = .0071
+  enrichments = linspace(natenr, maxenr, 10000)
+
+  costs = []
+
+  for e in enrichments:
+    m = Matl()
+    onlyEnrich(m, prod = e)
+    # s / p for swus/kg-product or just s for swus/kg-feed
+    costs.append(m.ValPerKg())
+
+  plt.plot(enrichments, costs)
   plt.show()
 
 if __name__ == '__main__':
-  vary_dispose()
+  #vary_dispose()
+  #only_enrich()
+  swuplot()
   quit()
 
   maxenr = .2
