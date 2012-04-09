@@ -4,13 +4,27 @@ import matplotlib.pyplot as plt
 
 kWhkg2GWdMT = 24000
 
+def linspace(start = 0, end = 1, count = 1):
+  vals = [0]*count
+  step = float(end - start) / float(count)
+  for i in range(count):
+    vals[i] = start + i * step
+  return vals
+
+class Costs:
+  def __init__(self, enrich = 133, convert = 6.5, mine = 100, dispose = 500):
+    self.enrich = enrich
+    self.convert = convert
+    self.mine = mine
+    self.dispose = dispose
+
 class Matl:
-  def __init__(self):
+  def __init__(self, mass = 1):
     self.Form = ''
     self.E = 0
     self.Enrich = 0
     self.Val = 0
-    self.M = 0
+    self.M = mass
 
   def ValPerKg(self):
     return self.Val / self.M
@@ -18,23 +32,23 @@ class Matl:
   def ValPerKWh(self):
     return self.Val / self.E
 
-def mine(m):
+def mine(m, cost):
   m.Form = "U3O8"
   m.Enrich = 0.0071
-  m.Val += 100 * m.M
+  m.Val += cost * m.M
   return m
 
-def convert(m):
+def convert(m, cost):
   m.Form = "U"
   UvTot = 3. * 238 / (3. * 238 + 8 * 16)
   m.M = UvTot * m.M
-  m.Val += 6.5 * m.M
+  m.Val += cost * m.M
   return m
 
-def enrich(m, tgt, tail):
+def enrich(m, cost, tgt, tail):
   P, nswu = swu(m.M, m.Enrich, tgt, tail)
 
-  m.Val += 133 * nswu
+  m.Val += cost * nswu
   m.Form = "U"
   m.M = P
   m.Enrich = tgt
@@ -46,14 +60,13 @@ def burn(m, nBatches):
   b1 = 1000 * m.Enrich
 
   # LRM discharge burnup
-  n = nBatches
-  bd = 2 * n / (n + 1) * b1
+  bd = 2.0 * nBatches / (nBatches + 1) * b1
 
   m.E = bd * kWhkg2GWdMT * m.M
   return m
 
-def dispose(m):
-  m.Val += 2000 * m.M
+def dispose(m, cost):
+  m.Val += cost * m.M
   return m
 
 def swu(F, xf, xp, xt):
@@ -64,34 +77,68 @@ def swu(F, xf, xp, xt):
 def potential(x):
   return (1 - 2 * x) * math.log((1 - x) / x)
 
-def onceThrough(m, e):
-  mine(m)
-  convert(m)
-  enrich(m, e, 0.003)
-  burn(m, 3)
-  dispose(m)
+def onceThrough(m, costs = None, prod = 0.035, tail = 0.003, nBatches = 3):
+  if costs is None:
+    costs = Costs()
+
+  mine(m, costs.mine)
+  convert(m, costs.convert)
+  enrich(m, costs.enrich, prod, tail)
+  burn(m, nBatches)
+  dispose(m, cost = costs.dispose)
+
+def vary_dispose():
+  maxenr = .1
+  natenr = .0071
+  enrichments = linspace(natenr, maxenr, 10000)
+  disp_costs = linspace(0, 1000, 20)
+  for cost in disp_costs:
+    valkg = []
+    valkwh = []
+    for e in enrichments:
+      m = Matl()
+      onceThrough(m, Costs(dispose = cost), prod = e)
+
+      valkg.append(m.ValPerKg())
+      valkwh.append(m.ValPerKWh())
+
+    plt.plot(enrichments, valkwh, label = str(cost))
+  plt.show()
+
+def swuplot():
+  maxenr = .2
+  natenr = .0071
+  enrichments = linspace(natenr, maxenr, 10000)
+
+  swus = []
+
+  for e in enrichments:
+    p, s = swu(1, natenr, e, 0.003)
+    # s / p for swus/kg-product or just s for swus/kg-feed
+    swus.append(s / p)
+
+  plt.plot(enrichments, swus)
+  plt.legend(costs)
+  plt.show()
 
 if __name__ == '__main__':
+  vary_dispose()
+  quit()
 
   maxenr = .2
   natenr = .0071
-  delta = (maxenr - natenr) / 100
+  enrichments = linspace(natenr, maxenr, 10000)
 
-  enrichments = []
   valkg = []
   valkwh = []
 
-  e = natenr
-  while e <= maxenr:
-    e += delta
-
+  for e in enrichments:
     m = Matl()
-    m.M = 1
-    onceThrough(m, e)
+    onceThrough(m, prod = e)
 
-    enrichments.append(m.Enrich)
     valkg.append(m.ValPerKg())
     valkwh.append(m.ValPerKWh())
 
-  plt.plot(enrichments, valkg)
+  plt.plot(enrichments, valkwh)
+  plt.show()
 
