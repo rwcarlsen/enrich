@@ -84,27 +84,53 @@ def onceThrough(m, costs = None, prod = 0.035, tail = 0.003, nBatches = 3):
   convert(m, costs.convert)
   enrich(m, costs.enrich, prod, tail)
   burn(m, nBatches)
-  dispose(m, cost = costs.dispose)
+  dispose(m, costs.dispose)
 
-def onlyEnrich(m, costs = None, prod = 0.035, tail = 0.003):
+def frontend(m, costs = None, prod = 0.035, tail = 0.003, nBatches = 3):
   if costs is None:
     costs = Costs()
 
   mine(m, costs.mine)
   convert(m, costs.convert)
   enrich(m, costs.enrich, prod, tail)
+  burn(m, nBatches)
+
+def backend(m, costs = None, prod = 0.035, tail = 0.003, nBatches = 3):
+  if costs is None:
+    costs = Costs()
+
+  burn(m, nBatches)
+  dispose(m, costs.dispose)
 
 def vary_dispose():
-  maxenr = .1
+  maxenr = .2
   natenr = .0071
   enrichments = linspace(natenr, maxenr, 10000)
-  disp_costs = linspace(0, 1000, 15)
+  disp_costs = linspace(0, 1000, 10)
   for cost in disp_costs:
     valkg = []
     valkwh = []
     for e in enrichments:
       m = Matl()
       onceThrough(m, Costs(dispose = cost), prod = e)
+
+      valkg.append(m.ValPerKg())
+      valkwh.append(m.ValPerKWh())
+
+    plt.plot(enrichments, valkwh, label = str(cost))
+  plt.show()
+
+def vary_mining():
+  maxenr = .2
+  natenr = .0071
+  enrichments = linspace(natenr, maxenr, 10000)
+  mine_costs = linspace(0, 200, 10)
+  for cost in mine_costs:
+    valkg = []
+    valkwh = []
+    for e in enrichments:
+      m = Matl()
+      onceThrough(m, Costs(mine = cost), prod = e)
 
       valkg.append(m.ValPerKg())
       valkwh.append(m.ValPerKWh())
@@ -128,42 +154,45 @@ def swuplot():
   plt.plot(enrichments, swus)
   plt.show()
 
-def only_enrich():
-  maxenr = .2
+def only_dispose():
+  maxenr = .1
   natenr = .0071
   enrichments = linspace(natenr, maxenr, 10000)
 
-  costs = []
+  kgcosts = []
+  kwhcosts = []
 
   for e in enrichments:
     m = Matl()
-    onlyEnrich(m, prod = e)
+    backend(m, prod = e)
     # s / p for swus/kg-product or just s for swus/kg-feed
-    costs.append(m.ValPerKg())
+    kgcosts.append(m.ValPerKg())
+    kwhcosts.append(m.ValPerKWh())
 
-  plt.plot(enrichments, costs)
+  plt.plot(enrichments, kwhcosts)
+  plt.show()
+
+def only_enrich():
+  maxenr = .1
+  natenr = .0071
+  enrichments = linspace(natenr, maxenr, 10000)
+
+  kgcosts = []
+  kwhcosts = []
+
+  for e in enrichments:
+    m = Matl()
+    frontend(m, prod = e)
+    # s / p for swus/kg-product or just s for swus/kg-feed
+    kgcosts.append(m.ValPerKg())
+    kwhcosts.append(m.ValPerKWh())
+
+  plt.plot(enrichments, kwhcosts)
   plt.show()
 
 if __name__ == '__main__':
-  #vary_dispose()
+  vary_dispose()
+  vary_mining()
   #only_enrich()
-  swuplot()
-  quit()
-
-  maxenr = .2
-  natenr = .0071
-  enrichments = linspace(natenr, maxenr, 10000)
-
-  valkg = []
-  valkwh = []
-
-  for e in enrichments:
-    m = Matl()
-    onceThrough(m, prod = e)
-
-    valkg.append(m.ValPerKg())
-    valkwh.append(m.ValPerKWh())
-
-  plt.plot(enrichments, valkwh)
-  plt.show()
+  #swuplot()
 
