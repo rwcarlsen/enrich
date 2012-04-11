@@ -19,10 +19,10 @@ class Costs:
     self.dispose = dispose
 
 class Matl:
-  def __init__(self, mass = 1):
+  def __init__(self, mass = 1, enrich = 0):
     self.Form = ''
     self.E = 0
-    self.Enrich = 0
+    self.Enrich = enrich
     self.Val = 0
     self.M = mass
 
@@ -163,9 +163,8 @@ def only_dispose():
   kwhcosts = []
 
   for e in enrichments:
-    m = Matl()
+    m = Matl(enrich = e)
     backend(m, prod = e)
-    # s / p for swus/kg-product or just s for swus/kg-feed
     kgcosts.append(m.ValPerKg())
     kwhcosts.append(m.ValPerKWh())
 
@@ -183,7 +182,6 @@ def only_enrich():
   for e in enrichments:
     m = Matl()
     frontend(m, prod = e)
-    # s / p for swus/kg-product or just s for swus/kg-feed
     kgcosts.append(m.ValPerKg())
     kwhcosts.append(m.ValPerKWh())
 
@@ -191,8 +189,9 @@ def only_enrich():
   plt.show()
 
 if __name__ == '__main__':
-  vary_dispose()
-  vary_mining()
+  #vary_dispose()
+  #vary_mining()
   #only_enrich()
+  only_dispose()
   #swuplot()
 
