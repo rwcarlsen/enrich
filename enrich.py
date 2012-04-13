@@ -118,6 +118,11 @@ def vary_dispose():
       valkwh.append(m.ValPerKWh())
 
     plt.plot(enrichments, valkwh, label = str(cost))
+
+  plt.title('Fuel Cycle Costs with Variable Disposal Cost')
+  plt.xlabel('Fuel Enrichment (mass fraction U235)')
+  plt.ylabel('Fuel Cycle Cost ($/kWh)')
+  plt.legend(['$' + str(c) + '/kgHM' for c in disp_costs])
   plt.show()
 
 def vary_mining():
@@ -136,6 +141,10 @@ def vary_mining():
       valkwh.append(m.ValPerKWh())
 
     plt.plot(enrichments, valkwh, label = str(cost))
+  plt.title('Fuel Cycle Costs with Variable U Resource Cost')
+  plt.xlabel('Fuel Enrichment (mass fraction U235)')
+  plt.ylabel('Fuel Cycle Cost ($/kWh)')
+  plt.legend(['$' + str(c) + '/kgU3O8' for c in mine_costs])
   plt.show()
 
 
@@ -145,17 +154,24 @@ def swuplot():
   enrichments = linspace(natenr, maxenr, 10000)
 
   swus = []
+  feedswus = []
 
   for e in enrichments:
     p, s = swu(1, natenr, e, 0.003)
     # s / p for swus/kg-product or just s for swus/kg-feed
     swus.append(s / p)
+    feedswus.append(s)
 
   plt.plot(enrichments, swus)
+  #plt.plot(enrichments, feedswus)
+  plt.title('Energy Required for Enrichment')
+  plt.xlabel('Fuel Enrichment (mass fraction U235)')
+  plt.ylabel('SWU for 1 kg of product')
+  #plt.legend(['1 kg of enriched U', '1 kg of feed U'])
   plt.show()
 
 def only_dispose():
-  maxenr = .1
+  maxenr = .2
   natenr = .0071
   enrichments = linspace(natenr, maxenr, 10000)
 
@@ -169,10 +185,13 @@ def only_dispose():
     kwhcosts.append(m.ValPerKWh())
 
   plt.plot(enrichments, kwhcosts)
+  plt.title('Back End Fuel Cycle Cost')
+  plt.xlabel('Fuel Enrichment (mass fraction U235)')
+  plt.ylabel('Back End Cost ($/kWh)')
   plt.show()
 
 def only_enrich():
-  maxenr = .1
+  maxenr = .2
   natenr = .0071
   enrichments = linspace(natenr, maxenr, 10000)
 
@@ -186,12 +205,47 @@ def only_enrich():
     kwhcosts.append(m.ValPerKWh())
 
   plt.plot(enrichments, kwhcosts)
+  plt.title('Front End Fuel Cycle Cost')
+  plt.xlabel('Fuel Enrichment (mass fraction U235)')
+  plt.ylabel('Front End Cost ($/kWh)')
+  plt.show()
+
+def front_back():
+  maxenr = .2
+  natenr = .0071
+  enrichments = linspace(natenr, maxenr, 10000)
+
+  frontcosts = []
+  backcosts = []
+  fullcosts = []
+
+  for e in enrichments:
+    m1 = Matl()
+    m2 = Matl(enrich = e)
+
+    frontend(m1, prod = e)
+    frontcosts.append(m1.ValPerKWh())
+
+    backend(m2, prod = e)
+    backcosts.append(m2.ValPerKWh())
+
+    backend(m1, prod = e)
+    fullcosts.append(m1.ValPerKWh())
+
+  plt.plot(enrichments, frontcosts)
+  plt.plot(enrichments, backcosts)
+  plt.plot(enrichments, fullcosts)
+  plt.title('Front v. Back End Fuel Cycle Cost')
+  plt.xlabel('Fuel Enrichment (mass fraction U235)')
+  plt.ylabel('Cost ($/kWh)')
+  plt.legend(['Front end only', 'Back end only', 'Full fuel cycle'])
   plt.show()
 
 if __name__ == '__main__':
   #vary_dispose()
   #vary_mining()
   #only_enrich()
-  only_dispose()
-  #swuplot()
+  #only_dispose()
+  #front_back()
+  swuplot()
 
