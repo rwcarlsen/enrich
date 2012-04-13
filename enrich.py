@@ -106,7 +106,7 @@ def vary_dispose():
   maxenr = .2
   natenr = .0071
   enrichments = linspace(natenr, maxenr, 10000)
-  disp_costs = linspace(0, 1000, 10)
+  disp_costs = linspace(0, 2000, 10)
   for cost in disp_costs:
     valkg = []
     valkwh = []
@@ -242,10 +242,10 @@ def front_back():
   plt.show()
 
 if __name__ == '__main__':
-  #vary_dispose()
-  #vary_mining()
-  #only_enrich()
-  #only_dispose()
-  #front_back()
+  vary_dispose()
+  vary_mining()
+  only_enrich()
+  only_dispose()
+  front_back()
   swuplot()
 
