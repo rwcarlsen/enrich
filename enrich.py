@@ -106,7 +106,7 @@ def vary_dispose():
   maxenr = .2
   natenr = .0071
   enrichments = linspace(natenr, maxenr, 10000)
-  disp_costs = linspace(0, 2000, 10)
+  disp_costs = linspace(0, 2500, 5)
   for cost in disp_costs:
     valkg = []
     valkwh = []
@@ -129,7 +129,7 @@ def vary_mining():
   maxenr = .2
   natenr = .0071
   enrichments = linspace(natenr, maxenr, 10000)
-  mine_costs = linspace(0, 200, 10)
+  mine_costs = linspace(0, 200, 5)
   for cost in mine_costs:
     valkg = []
     valkwh = []
@@ -162,7 +162,7 @@ def swuplot():
     swus.append(s / p)
     feedswus.append(s)
 
-  plt.plot(enrichments, swus)
+  plt.plot(enrichments, feedswus)
   #plt.plot(enrichments, feedswus)
   plt.title('Energy Required for Enrichment')
   plt.xlabel('Fuel Enrichment (mass fraction U235)')
@@ -242,10 +242,10 @@ def front_back():
   plt.show()
 
 if __name__ == '__main__':
-  vary_dispose()
+  #vary_dispose()
   vary_mining()
-  only_enrich()
-  only_dispose()
-  front_back()
-  swuplot()
+  #only_enrich()
+  #only_dispose()
+  #front_back()
+  #swuplot()
 
